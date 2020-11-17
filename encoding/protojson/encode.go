@@ -88,6 +88,9 @@ type MarshalOptions struct {
 		protoregistry.ExtensionTypeResolver
 		protoregistry.MessageTypeResolver
 	}
+
+	// FormatInt64AsNumber is enabled when you want format 64bit integer as json number.
+	MarshalInt64AsNumber bool
 }
 
 // Format formats the message as a string.
@@ -274,8 +277,16 @@ func (e encoder) marshalSingular(val pref.Value, fd pref.FieldDescriptor) error 
 
 	case pref.Int64Kind, pref.Sint64Kind, pref.Uint64Kind,
 		pref.Sfixed64Kind, pref.Fixed64Kind:
-		// 64-bit integers are written out as JSON string.
-		e.WriteString(val.String())
+		if e.opts.MarshalInt64AsNumber {
+			if kind == pref.Uint64Kind {
+				e.WriteUint(val.Uint())
+			} else {
+				e.WriteInt(val.Int())
+			}
+		} else {
+			// 64-bit integers are written out as JSON string.
+			e.WriteString(val.String())
+		}
 
 	case pref.FloatKind:
 		// Encoder.WriteFloat handles the special numbers NaN and infinites.
