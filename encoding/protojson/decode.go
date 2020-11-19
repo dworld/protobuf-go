@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/internal/errors"
 	"google.golang.org/protobuf/internal/flags"
 	"google.golang.org/protobuf/internal/genid"
+	"google.golang.org/protobuf/internal/impl"
 	"google.golang.org/protobuf/internal/pragma"
 	"google.golang.org/protobuf/internal/set"
 	"google.golang.org/protobuf/proto"
@@ -480,7 +481,15 @@ func unmarshalEnum(tok json.Token, fd pref.FieldDescriptor) (pref.Value, bool) {
 		if enumVal := fd.Enum().Values().ByName(pref.Name(s)); enumVal != nil {
 			return pref.ValueOfEnum(enumVal.Number()), true
 		}
-
+		if _, ok := impl.EnumNames[string(fd.Enum().Name())]; ok {
+			enumDesc := fd.Enum()
+			s = fmt.Sprintf("%v_%s", enumDesc.Name(), s)
+			if enumVal := fd.Enum().Values().ByName(pref.Name(s)); enumVal != nil {
+				return pref.ValueOfEnum(enumVal.Number()), true
+			}
+			// dunmarshal invalid string as default 0
+			return pref.ValueOfEnum(pref.EnumNumber(0)), true
+		}
 	case json.Number:
 		if n, ok := tok.Int(32); ok {
 			return pref.ValueOfEnum(pref.EnumNumber(n)), true

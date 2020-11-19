@@ -20,6 +20,9 @@ import (
 // functions that we do not want to appear in godoc.
 type Export struct{}
 
+var EnumNames = map[string]map[int32]string{}
+var EnumValues = map[string]map[string]int32{}
+
 // NewError formats a string according to the format specifier and arguments and
 // returns an error that has a "proto" prefix.
 func (Export) NewError(f string, x ...interface{}) error {
@@ -72,6 +75,12 @@ func (Export) EnumTypeOf(e enum) pref.EnumType {
 // EnumStringOf returns the enum value as a string, either as the name if
 // the number is resolvable, or the number formatted as a string.
 func (Export) EnumStringOf(ed pref.EnumDescriptor, n pref.EnumNumber) string {
+	if m, ok := EnumNames[string(ed.Name())]; ok {
+		if r, ok := m[int32(n)]; ok {
+			return r
+		}
+		return strconv.Itoa(int(n))
+	}
 	ev := ed.Values().ByNumber(n)
 	if ev != nil {
 		return string(ev.Name())

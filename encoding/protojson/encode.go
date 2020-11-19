@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/internal/filedesc"
 	"google.golang.org/protobuf/internal/flags"
 	"google.golang.org/protobuf/internal/genid"
+	"google.golang.org/protobuf/internal/impl"
 	"google.golang.org/protobuf/internal/order"
 	"google.golang.org/protobuf/internal/pragma"
 	"google.golang.org/protobuf/proto"
@@ -307,7 +308,11 @@ func (e encoder) marshalSingular(val pref.Value, fd pref.FieldDescriptor) error 
 			if e.opts.UseEnumNumbers || desc == nil {
 				e.WriteInt(int64(val.Enum()))
 			} else {
-				e.WriteString(string(desc.Name()))
+				if m, ok := impl.EnumNames[string(fd.Enum().Name())]; ok {
+					e.WriteString(m[int32(val.Enum())])
+				} else {
+					e.WriteString(string(desc.Name()))
+				}
 			}
 		}
 
@@ -352,4 +357,12 @@ func (e encoder) marshalMap(mmap pref.Map, fd pref.FieldDescriptor) error {
 		return true
 	})
 	return err
+}
+
+func SetEnumNames(typeName string, m map[int32]string) {
+	impl.EnumNames[typeName] = m
+}
+
+func SetEnumValues(typeName string, m map[string]int32) {
+	impl.EnumValues[typeName] = m
 }
